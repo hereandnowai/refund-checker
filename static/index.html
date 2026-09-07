@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Refund Checker</title>
+<style>
+  :root { --ink:#1b1b1f; --muted:#6b6b76; --line:#e2e2e8; --ok:#137a3a; --no:#b3261e; --bg:#f6f6f8; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 system-ui, sans-serif; color:var(--ink); background:var(--bg); }
+  main { max-width:880px; margin:40px auto; padding:0 20px; display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+  h1 { grid-column:1/-1; margin:0 0 4px; font-size:26px; }
+  p.sub { grid-column:1/-1; margin:0 0 12px; color:var(--muted); }
+  form, section { background:#fff; border:1px solid var(--line); border-radius:12px; padding:22px; }
+  label { display:block; font-size:13px; color:var(--muted); margin:12px 0 4px; }
+  label:first-child { margin-top:0; }
+  input[type=text], input[type=number], input[type=date], select { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+  .row { display:flex; gap:18px; margin-top:14px; }
+  .row label { display:flex; align-items:center; gap:6px; margin:0; color:var(--ink); }
+  button { margin-top:18px; width:100%; padding:11px; border:0; border-radius:8px; background:var(--ink); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  #verdict { font-size:30px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; }
+  #verdict.approved { color:var(--ok); } #verdict.denied { color:var(--no); }
+  #reason { color:var(--muted); margin-top:6px; }
+  #amount { font-size:22px; margin-top:16px; }
+  #empty { color:var(--muted); }
+  pre { background:var(--bg); padding:12px; border-radius:8px; font-size:12px; overflow-x:auto; margin-top:18px; }
+  @media (max-width:700px) { main { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Refund Checker</h1>
+  <p class="sub">Enter the order as the customer describes it. The policy decides.</p>
+
+  <form id="form">
+    <label for="order_id">Order ID</label>
+    <input id="order_id" name="order_id" type="text" value="ORD-1042" required>
+
+    <label for="price">Item price (₹)</label>
+    <input id="price" name="price" type="number" step="0.01" min="0.01" value="12.95" required>
+
+    <label for="category">Category</label>
+    <select id="category" name="category">
+      <option value="electronics">Electronics</option>
+      <option value="clothing">Clothing</option>
+      <option value="books">Books</option>
+      <option value="clearance">Clearance (final sale)</option>
+      <option value="gift-card">Gift card (final sale)</option>
+      <option value="perishable">Perishable (final sale)</option>
+    </select>
+
+    <label for="delivered_on">Delivered on</label>
+    <input id="delivered_on" name="delivered_on" type="date" required>
+
+    <label for="shipping">Shipping paid (₹)</label>
+    <input id="shipping" name="shipping" type="number" step="0.01" min="0" value="0">
+
+    <div class="row">
+      <label><input id="opened" name="opened" type="checkbox"> Opened</label>
+      <label><input id="faulty" name="faulty" type="checkbox"> Faulty</label>
+    </div>
+
+    <button type="submit">Check refund</button>
+  </form>
+
+  <section>
+    <div id="empty">No decision yet.</div>
+    <div id="result" hidden>
+      <div id="verdict"></div>
+      <div id="reason"></div>
+      <div id="amount"></div>
+      <pre id="raw"></pre>
+    </div>
+  </section>
+</main>
+<script>
+  const form = document.getElementById("form");
+  const delivered = document.getElementById("delivered_on");
+  const today = new Date(); today.setDate(today.getDate() - 10);
+  delivered.value = today.toISOString().slice(0, 10);
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form).entries());
+    data.price = Number(data.price);
+    data.shipping = Number(data.shipping || 0);
+    data.opened = form.opened.checked;
+    data.faulty = form.faulty.checked;
+
+    const res = await fetch("/api/check", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data)
+    });
+    const out = await res.json();
+
+    document.getElementById("empty").hidden = true;
+    document.getElementById("result").hidden = false;
+    const v = document.getElementById("verdict");
+    v.textContent = out.verdict; v.className = out.verdict;
+    document.getElementById("reason").textContent = out.reason;
+    document.getElementById("amount").textContent =
+      out.verdict === "approved" ? `Refund: ₹${out.refund_amount.toFixed(2)}` : "";
+    document.getElementById("raw").textContent = JSON.stringify(out, null, 2);
+  });
+</script>
+</body>
+</html>
