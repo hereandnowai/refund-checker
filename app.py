@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from refund_checker.rules import Order, check_refund
+from refund_checker.rules import Order, check_refund, partial_refund
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -22,6 +22,8 @@ class CheckRequest(BaseModel):
     opened: bool = False
     faulty: bool = False
     shipping: float = Field(default=0.0, ge=0)
+    quantity: int = Field(default=1, ge=1)
+    returned_quantity: int | None = None
 
 
 class CheckResponse(BaseModel):
@@ -38,8 +40,13 @@ def index() -> FileResponse:
 
 @app.post("/api/check", response_model=CheckResponse)
 def check(request: CheckRequest) -> CheckResponse:
-    order = Order(**request.model_dump())
-    decision = check_refund(order)
+    payload = request.model_dump()
+    returned = payload.pop("returned_quantity")
+    order = Order(**payload)
+    if returned is not None and returned < order.quantity:
+        decision = partial_refund(order, returned)
+    else:
+        decision = check_refund(order)
     return CheckResponse(
         order_id=order.order_id,
         verdict=decision.verdict.value,

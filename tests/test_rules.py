@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
-from refund_checker.rules import Order, Verdict, check_refund
+import refund_checker.rules as rules
+from refund_checker.rules import Decision, Order, Verdict, check_refund, partial_refund
 
 
 def delivered(days_ago: int) -> date:
@@ -57,3 +58,20 @@ def test_faulty_item_refunds_shipping_and_waives_fee():
 
     assert decision.verdict == Verdict.APPROVED
     assert decision.refund_amount == 108.0
+
+
+def test_partial_refund_rejects_more_units_than_delivered():
+    decision = partial_refund(make_order(quantity=2), returned_quantity=3)
+
+    assert decision.verdict == Verdict.DENIED
+
+
+def test_partial_refund_approves_half_of_the_order(monkeypatch):
+    monkeypatch.setattr(
+        rules, "check_refund", lambda order: Decision(Verdict.APPROVED, "ok", 50.0)
+    )
+
+    decision = partial_refund(make_order(price=100.0, quantity=2), returned_quantity=1)
+
+    assert decision.verdict == Verdict.APPROVED
+    assert decision.refund_amount == 50.0
