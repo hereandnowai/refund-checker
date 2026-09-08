@@ -22,13 +22,14 @@ for tool in git gh; do command -v "$tool" >/dev/null || { echo "need $tool insta
 gh auth status >/dev/null 2>&1 || { echo "sign in first:  gh auth login"; exit 1; }
 ME="$(gh api user -q .login)"
 
-if [ ! -d .git ] || ! git remote get-url origin 2>/dev/null | grep -q "hereandnowai/refund-checker"; then
+# accept a fresh clone (origin = hereandnowai) or a re-run (upstream = hereandnowai)
+if [ ! -d .git ] || ! git remote -v 2>/dev/null | grep -q "hereandnowai/refund-checker"; then
   echo "run this from inside a clone of $SRC"; exit 1
 fi
 
 echo "==> 1/6  Fetching everything from hereandnowai"
-git fetch -q origin --tags
-git remote rename origin upstream 2>/dev/null || true
+if git remote get-url upstream >/dev/null 2>&1; then :; else git remote rename origin upstream; fi
+git fetch -q upstream --tags
 
 echo "==> 2/6  Creating private repo $ME/$NAME"
 if gh repo view "$ME/$NAME" >/dev/null 2>&1; then
