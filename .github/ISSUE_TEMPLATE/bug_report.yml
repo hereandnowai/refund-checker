@@ -1,0 +1,28 @@
+name: Bug report
+description: The checker gave a decision the policy does not support
+labels: [bug]
+body:
+  - type: input
+    id: order
+    attributes:
+      label: Order as entered
+      placeholder: "₹100, electronics, delivered 30 days ago, unopened"
+    validations:
+      required: true
+  - type: input
+    id: got
+    attributes:
+      label: Decision the checker gave
+    validations:
+      required: true
+  - type: input
+    id: expected
+    attributes:
+      label: Decision the policy says it should be
+      description: Quote the README "Refund policy" point.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
