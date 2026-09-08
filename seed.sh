@@ -42,6 +42,9 @@ git remote add origin "https://github.com/$ME/$NAME.git"
 echo "==> 3/6  Pushing main at the point BEFORE the seeded pull requests"
 git checkout -q -B main seed-base
 sed -i.bak "s|^\* @.*|* @$ME|" .github/CODEOWNERS && rm -f .github/CODEOWNERS.bak
+# lab machines often have no git identity — set one for this repo only, from the GitHub login
+[ -n "$(git config user.email)" ] || git config user.email "$ME@users.noreply.github.com"
+[ -n "$(git config user.name)" ]  || git config user.name "$ME"
 if ! git diff --quiet -- .github/CODEOWNERS; then
   git add .github/CODEOWNERS && git commit -q -m "chore: CODEOWNERS is $ME"
 fi
