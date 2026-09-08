@@ -40,6 +40,12 @@ fi
 git remote remove origin 2>/dev/null || true
 git remote add origin "https://github.com/$ME/$NAME.git"
 
+if git ls-remote --exit-code --heads origin main >/dev/null 2>&1; then
+  echo "     $ME/$NAME already has a main branch — it was seeded before. Nothing to do."
+  echo "     Want a fresh one?  ./seed.sh refund-checker-2"
+  exit 0
+fi
+
 echo "==> 3/6  Pushing main at the point BEFORE the seeded pull requests"
 git checkout -q -B main seed-base
 sed -i.bak "s|^\* @.*|* @$ME|" .github/CODEOWNERS && rm -f .github/CODEOWNERS.bak
