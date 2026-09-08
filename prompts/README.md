@@ -4,6 +4,7 @@ Three reusable VS Code prompt files. They name no project, so they work in any r
 
 | File | Slash command | Attach |
 |---|---|---|
+| `understand.prompt.md` | `/understand` | nothing — optionally name the change you plan to make |
 | `test-audit.prompt.md` | `/test-audit` | a test file and the spec it should prove — `#file:tests/test_rules.py #file:README.md` |
 | `review-diff.prompt.md` | `/review-diff` | a change — `#changes`, `#activePullRequest`, or `#file:some.diff` |
 | `pr-description.prompt.md` | `/pr-description` | `#changes`, and optionally `fixes #12` |
