@@ -52,6 +52,12 @@
     <label for="delivered_on">Delivered on</label>
     <input id="delivered_on" name="delivered_on" type="date" required>
 
+    <label for="quantity">Units delivered</label>
+    <input id="quantity" name="quantity" type="number" min="1" value="1">
+
+    <label for="returned_quantity">Units being returned</label>
+    <input id="returned_quantity" name="returned_quantity" type="number" min="0" value="1">
+
     <label for="shipping">Shipping paid (₹)</label>
     <input id="shipping" name="shipping" type="number" step="0.01" min="0" value="0">
 
@@ -84,6 +90,8 @@
     const data = Object.fromEntries(new FormData(form).entries());
     data.price = Number(data.price);
     data.shipping = Number(data.shipping || 0);
+    data.quantity = Number(data.quantity || 1);
+    data.returned_quantity = Number(data.returned_quantity || data.quantity);
     data.opened = form.opened.checked;
     data.faulty = form.faulty.checked;
 

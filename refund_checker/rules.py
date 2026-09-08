@@ -29,6 +29,7 @@ class Order:
     opened: bool = False
     faulty: bool = False
     shipping: float = 0.0
+    quantity: int = 1
 
 
 @dataclass
@@ -68,3 +69,21 @@ def check_refund(order: Order) -> Decision:
         )
 
     return Decision(Verdict.DENIED, "the refund window has closed")
+
+
+def partial_refund(order: Order, returned_quantity: int) -> Decision:
+    """Refund for returning some of the units in a multi-unit order.
+
+    The refund is the returned share of the order, then the normal policy applies.
+    """
+    try:
+        share = returned_quantity / order.quantity
+    except (ZeroDivisionError, TypeError):
+        return Decision(Verdict.DENIED, "could not work out the returned share")
+
+    if share > 1:
+        return Decision(Verdict.DENIED, "cannot return more units than were delivered")
+
+    order.price = round(order.price * share, 2)
+    order.shipping = round(order.shipping * share, 2)
+    return check_refund(order)
